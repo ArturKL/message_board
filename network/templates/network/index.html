@@ -1,5 +1,31 @@
-{% extends "network/layout.html" %} 
+{% extends "network/layout.html" %}
+{% load humanize %} 
 
 {% block body %}
-<form action="{% url '' %}"></form> 
+<h2><strong>All Posts</strong></h2>
+<div class="content">
+    
+    {% if request.user.is_authenticated %}
+        <div class="post">
+            <form action="{% url 'new_post' %}" method="POST">
+                {% csrf_token %}
+                <h5><strong>New Post</strong></h5>
+                <textarea name="body" rows="3" maxlength="300"></textarea><br>
+                <input type="submit" value="Post" class="btn btn-primary">
+            </form> 
+        </div>
+    {% endif %}    
+
+    {% for post in posts %}
+        <div class="post">
+                <h5><strong><a href="{% url 'profile' post.author.username %}">{{ post.author }}</a></strong></h5>
+                <span class="post-body">{{ post.body | linebreaks | urlize }}</span>
+                <span class="text-muted">{{ post.timestamp | naturaltime }}</span>
+                Likes: {{ post.num_liked }}
+        </div>
+    {% empty %}
+        No posts
+    {% endfor %}
+        
+</div>
 {% endblock %}

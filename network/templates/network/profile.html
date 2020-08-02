@@ -1,0 +1,45 @@
+{% extends 'network/layout.html' %}
+{% load humanize %}
+
+
+{% block title %}
+    {{ user.username }}
+{% endblock title %}
+
+
+{% block body %}
+<div class="row">
+    <div class="col-sm-12 col-md-3">
+        <h2 id='username'><strong>{{ user.username }}</strong></h2>
+        <table>
+            <tr>
+                <th>Followers</th>
+                <th>Follows</th>
+            </tr>
+            <tr>
+                <td>{{ user.num_followers }}</td>
+                <td>{{ user.follows.all.count }}</td>
+            </tr>
+        </table>
+        {% if request.user.is_authenticated and request.user.id != user.id and request.user not in user.followers.all %}
+            <button class="btn btn-primary" id="follow">Follow</button>
+        {% elif request.user.is_authenticated and request.user.id != user.id and request.user in user.followers.all %}
+            <button class="btn btn-primary" id="follow">Unfollow</button>
+        {% endif %}
+    </div>
+    <div class="col-sm-12 col-md-9">
+        <h2>Posts</h2>
+        {% for post in posts %}
+            <div class="post">
+                    <h5><strong>{{ post.author }}</strong></h5>
+                    <span class="post-body">{{ post.body | linebreaks | urlize }}</span>
+                    <span class="text-muted">{{ post.timestamp | naturaltime }}</span>
+                    Likes: {{ post.num_liked }}
+            </div>
+        {% empty %}
+            No posts
+        {% endfor %}
+    </div>
+</div>
+{% endblock body %}
+    

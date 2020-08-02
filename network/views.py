@@ -3,12 +3,15 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from django.db.models import Count
 
-from .models import User
+from .models import User, Post
 
 
 def index(request):
-    return render(request, "network/index.html")
+    posts = Post.objects.annotate(num_liked=Count("liked"))[::-1]
+    return render(request, "network/index.html", {"posts": posts})
 
 
 def login_view(request):
@@ -24,9 +27,11 @@ def login_view(request):
             login(request, user)
             return HttpResponseRedirect(reverse("index"))
         else:
-            return render(request, "network/login.html", {
-                "message": "Invalid username and/or password."
-            })
+            return render(
+                request,
+                "network/login.html",
+                {"message": "Invalid username and/or password."},
+            )
     else:
         return render(request, "network/login.html")
 
@@ -45,19 +50,49 @@ def register(request):
         password = request.POST["password"]
         confirmation = request.POST["confirmation"]
         if password != confirmation:
-            return render(request, "network/register.html", {
-                "message": "Passwords must match."
-            })
+            return render(
+                request, "network/register.html", {"message": "Passwords must match."}
+            )
 
         # Attempt to create new user
         try:
             user = User.objects.create_user(username, email, password)
             user.save()
         except IntegrityError:
-            return render(request, "network/register.html", {
-                "message": "Username already taken."
-            })
+            return render(
+                request, "network/register.html", {"message": "Username already taken."}
+            )
         login(request, user)
         return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "network/register.html")
+
+
+@login_required
+def new_post(request):
+    if request.method == "POST":
+        body = request.POST["body"]
+
+        # Check if body lenght is valid adn save post
+        if len(body) <= 300:
+            post = Post()
+            post.body = body
+            post.author = request.user
+            post.save()
+
+        return HttpResponseRedirect(reverse("index"))
+
+
+def profile(request, name):
+    users = User.objects.annotate(num_followers=Count("followers"))
+    user = users.get(username=name)
+
+    # TODO: error page
+    if not user:
+        return "error"
+
+    posts = (
+        Post.objects.filter(author=user).all().annotate(num_liked=Count("liked"))[::-1]
+    )
+    return render(request, "network/profile.html", {"user": user, "posts": posts})
+
