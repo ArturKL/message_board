@@ -22,9 +22,9 @@
             </tr>
         </table>
         {% if request.user.is_authenticated and request.user.id != user.id and request.user not in user.followers.all %}
-            <button class="btn btn-primary" id="follow">Follow</button>
+            <a href="{% url 'follow' user.username %}"><button class="btn btn-primary" id="follow">Follow</button></a>
         {% elif request.user.is_authenticated and request.user.id != user.id and request.user in user.followers.all %}
-            <button class="btn btn-primary" id="follow">Unfollow</button>
+            <a href="{% url 'follow' user.username %}"><button class="btn btn-primary" id="follow">Unfollow</button></a>
         {% endif %}
     </div>
     <div class="col-sm-12 col-md-9">

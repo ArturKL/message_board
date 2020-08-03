@@ -10,7 +10,7 @@ from .models import User, Post
 
 
 def index(request):
-    posts = Post.objects.annotate(num_liked=Count("liked"))[::-1]
+    posts = Post.objects.annotate(num_liked=Count("liked")).order_by('-timestamp')
     return render(request, "network/index.html", {"posts": posts})
 
 
@@ -89,10 +89,30 @@ def profile(request, name):
 
     # TODO: error page
     if not user:
-        return "error"
+        return HttpResponse("error")
 
-    posts = (
-        Post.objects.filter(author=user).all().annotate(num_liked=Count("liked"))[::-1]
-    )
+    posts = Post.objects.filter(author=user).all().annotate(num_liked=Count("liked")).order_by('-timestamp')
     return render(request, "network/profile.html", {"user": user, "posts": posts})
+
+
+@login_required
+def follow(request, name):
+    user = User.objects.get(username=name)
+    # TODO: error page
+
+    if user == request.user:
+        return HttpResponse("error")
+
+    if user in request.user.follows.all():
+        request.user.follows.remove(user)
+    elif user not in request.user.follows.all():
+        request.user.follows.add(user)
+    return HttpResponseRedirect(reverse(profile, args=[user.username]))
+
+
+@login_required
+def following_view(request):
+    following = request.user.follows.all()
+    posts = Post.objects.filter(author__in=following).annotate(num_liked=Count('liked')).order_by('-timestamp')
+    return render(request, 'network/following.html', {"posts": posts})
 
