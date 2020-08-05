@@ -1,17 +1,18 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
+from django.core.paginator import Paginator
+
 
 from .models import User, Post
 
 
 def index(request):
-    posts = Post.objects.annotate(num_liked=Count("liked")).order_by('-timestamp')
-    return render(request, "network/index.html", {"posts": posts})
+    return render(request, "network/index.html")
 
 
 def login_view(request):
@@ -44,7 +45,17 @@ def logout_view(request):
 def register(request):
     if request.method == "POST":
         username = request.POST["username"]
+        forbidden = '*/\\'
+        if any(symbol in username for symbol in forbidden):
+            return render(
+                request, "network/register.html", {"message": "Username should not contain *, \\, /"}
+            )
+
         email = request.POST["email"]
+        if not email:
+            return render(
+                request, "network/register.html", {"message": "Email is required"}
+            )
 
         # Ensure password matches confirmation
         password = request.POST["password"]
@@ -91,8 +102,7 @@ def profile(request, name):
     if not user:
         return HttpResponse("error")
 
-    posts = Post.objects.filter(author=user).all().annotate(num_liked=Count("liked")).order_by('-timestamp')
-    return render(request, "network/profile.html", {"user": user, "posts": posts})
+    return render(request, "network/profile.html", {"user": user})
 
 
 @login_required
@@ -112,7 +122,21 @@ def follow(request, name):
 
 @login_required
 def following_view(request):
-    following = request.user.follows.all()
-    posts = Post.objects.filter(author__in=following).annotate(num_liked=Count('liked')).order_by('-timestamp')
-    return render(request, 'network/following.html', {"posts": posts})
+    return render(request, 'network/following.html')
 
+
+def posts(request, page_num, username):
+    if username == '*':
+        posts = Post.objects\
+                .order_by('-timestamp')
+    elif username == '**':
+        following = request.user.follows.all()
+        posts = Post.objects.filter(author__in=following)\
+                .order_by('-timestamp')
+    else:
+        author = User.objects.get(username=username)
+        posts = Post.objects.filter(author=author).all()\
+                .order_by('-timestamp')
+    p = Paginator(posts, 10)
+    page = p.page(page_num)
+    return JsonResponse([post.serialize() for post in page.object_list] + [{"num_pages": p.num_pages}], safe=False)

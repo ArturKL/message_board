@@ -27,18 +27,9 @@
             <a href="{% url 'follow' user.username %}"><button class="btn btn-primary" id="follow">Unfollow</button></a>
         {% endif %}
     </div>
-    <div class="col-sm-12 col-md-9">
+    <div class="col-sm-12 col-md-9 posts">
         <h2>Posts</h2>
-        {% for post in posts %}
-            <div class="post">
-                    <h5><strong>{{ post.author }}</strong></h5>
-                    <span class="post-body">{{ post.body | linebreaks | urlize }}</span>
-                    <span class="text-muted">{{ post.timestamp | naturaltime }}</span>
-                    Likes: {{ post.num_liked }}
-            </div>
-        {% empty %}
-            No posts
-        {% endfor %}
+        <div id="posts"></div>
     </div>
 </div>
 {% endblock body %}

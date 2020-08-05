@@ -1,5 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Count
+from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.utils.html import urlize, linebreaks
 
 
 class User(AbstractUser):
@@ -13,3 +16,15 @@ class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="posts")
     timestamp = models.DateTimeField(auto_now_add=True)
     liked = models.ManyToManyField(User, related_name="likes")
+
+    def num_liked(self):
+        return len(self.liked.all())
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "author": self.author.username,
+            "body": urlize(self.body).replace('\n', '<br>'),
+            "timestamp": linebreaks(naturaltime(self.timestamp)),
+            "liked": self.num_liked()
+        }
