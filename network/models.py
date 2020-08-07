@@ -24,7 +24,7 @@ class Post(models.Model):
         return {
             "id": self.id,
             "author": self.author.username,
-            "body": urlize(self.body).replace('\n', '<br>'),
+            "body": self.body,
             "timestamp": linebreaks(naturaltime(self.timestamp)),
             "liked": self.num_liked()
         }

@@ -8,7 +8,27 @@
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
         <link href="{% static 'network/styles.css' %}" rel="stylesheet">
         <script src="{% static 'network/script.js' %}"></script>
-        <meta name="viewport" content="width=device-width, intial-scale=1.0">
+        <script src="https://cdn.jsdelivr.net/npm/js-cookie@rc/dist/js.cookie.min.js"></script>
+        <script>
+            let page = 1;
+            let current_user = "{{ request.user.username }}";
+            document.addEventListener('DOMContentLoaded', () => {
+                const form_body = document.getElementById('form-body');
+                const submit = document.getElementById('submit');
+                if (submit !== null && form_body !== null) {
+                    submit.disabled = true;
+                    form_body.onkeyup = () => {
+                        if (form_body.value.length === 0) {
+                            submit.disabled = true;
+                        }
+                        else {
+                            submit.disabled = false;
+                        }
+                    }    
+                }
+                address();
+            });
+        </script>
     </head>
     <body>
 

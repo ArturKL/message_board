@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.core.paginator import Paginator
+import json
 
 
 from .models import User, Post
@@ -140,3 +141,24 @@ def posts(request, page_num, username):
     p = Paginator(posts, 10)
     page = p.page(page_num)
     return JsonResponse([post.serialize() for post in page.object_list] + [{"num_pages": p.num_pages}], safe=False)
+
+
+def get_post_by_id(request, id):
+    post = Post.objects.get(pk=id)
+    if not post:
+        return JsonResponse({"message": "Post not found"})
+    return JsonResponse(post.serialize())
+
+
+@login_required
+def edit_post(request, post_id):
+    if request.method != 'PUT':
+        return HttpResponse('error')
+    post = Post.objects.get(pk=post_id)
+    if post.author == request.user:
+        data = json.loads(request.body)
+        print(data)
+        if data.get("body") is not None:
+            post.body = data["body"]
+            post.save()
+            return HttpResponse(status=204)
