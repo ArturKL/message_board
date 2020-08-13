@@ -157,8 +157,20 @@ def edit_post(request, post_id):
     post = Post.objects.get(pk=post_id)
     if post.author == request.user:
         data = json.loads(request.body)
-        print(data)
         if data.get("body") is not None:
             post.body = data["body"]
             post.save()
             return HttpResponse(status=204)
+
+
+@login_required
+def like_post(request, id):
+    if request.method == "PUT":
+        post = Post.objects.get(pk=id)
+        user = request.user
+        if user in post.liked.all():
+            post.liked.remove(user)
+        else:
+            post.liked.add(user)
+        post.save()
+        return HttpResponse(status=204)

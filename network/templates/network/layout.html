@@ -9,9 +9,11 @@
         <link href="{% static 'network/styles.css' %}" rel="stylesheet">
         <script src="{% static 'network/script.js' %}"></script>
         <script src="https://cdn.jsdelivr.net/npm/js-cookie@rc/dist/js.cookie.min.js"></script>
+        <script src="https://kit.fontawesome.com/3c7aa175d3.js" crossorigin="anonymous"></script>
         <script>
             let page = 1;
-            let current_user = "{{ request.user.username }}";
+            let current_user = parseInt("{{ request.user.id }}");
+            console.log(current_user);
             document.addEventListener('DOMContentLoaded', () => {
                 const form_body = document.getElementById('form-body');
                 const submit = document.getElementById('submit');

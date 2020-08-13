@@ -140,9 +140,46 @@ function render_post(post) {
     post_div.append(date)
 
     // Likes
+    let like_btn = document.createElement('a');
+    like_btn.style.userSelect = "none";
+    like_btn.addEventListener('click', function() {
+        like(post);
+    })
     let likes = document.createElement('span');
-    likes.innerHTML = `Likes: ${post.liked}`;
-    post_div.append(likes);
-
+    likes.innerHTML += ` ${post.liked}`;
+    let icon =  document.createElement('i');
+    icon.classList.add("fas", "fa-heart", "like-icon");
+    console.log(current_user, post.users_liked);
+    if (post.users_liked.includes(current_user)) {
+        icon.style.color = "red";
+    } else {
+        icon.style.color = "grey";
+    }
+    like_btn.append(icon, likes);
+    post_div.append(like_btn);
     return post_div;
+}
+
+function like(post) {
+    const csrftoken = Cookies.get('csrftoken');
+    fetch(`post/${post.id}/like`, {
+        method: "PUT",
+        headers: { "X-CSRFToken": csrftoken },
+    })
+    .then(response => response.status)
+    .then(status => {
+        if (status === 204) {
+            const like_btn = document.getElementById(`post${post.id}`).lastChild;
+            const like_icon = like_btn.firstChild;
+            const like_counter = like_btn.lastChild;
+            if (like_icon.style.color === "red") {
+                like_icon.style.color = "grey";
+                like_counter.innerHTML = ` ${parseInt(like_counter.innerHTML) - 1}`;
+            } else {
+                like_icon.style.color = "red";
+                like_counter.innerHTML = ` ${parseInt(like_counter.innerHTML) + 1}`;
+
+            }
+        }
+    })
 }
