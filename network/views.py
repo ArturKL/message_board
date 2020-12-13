@@ -6,6 +6,9 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.core.paginator import Paginator
+
+from django.core.exceptions import ObjectDoesNotExist
+
 import json
 
 
@@ -85,7 +88,7 @@ def new_post(request):
     if request.method == "POST":
         body = request.POST["body"]
 
-        # Check if body lenght is valid adn save post
+        # Check if body length is valid adn save post
         if len(body) <= 300:
             post = Post()
             post.body = body
@@ -97,22 +100,19 @@ def new_post(request):
 
 def profile(request, name):
     users = User.objects.annotate(num_followers=Count("followers"))
-    user = users.get(username=name)
-
-    # TODO: error page
-    if not user:
-        return HttpResponse("error")
-
+    try:
+        user = users.get(username=name)
+    except ObjectDoesNotExist:
+        return render(request, 'network/error.html', {"status": 404, "message": 'User not found'})
     return render(request, "network/profile.html", {"user": user})
 
 
 @login_required
 def follow(request, name):
     user = User.objects.get(username=name)
-    # TODO: error page
 
     if user == request.user:
-        return HttpResponse("error")
+        return render(request, 'network/error.html', {"status": 404, "message": 'User not found'})
 
     if user in request.user.follows.all():
         request.user.follows.remove(user)
@@ -128,32 +128,33 @@ def following_view(request):
 
 def posts(request, page_num, username):
     if username == '*':
-        posts = Post.objects\
+        post_list = Post.objects\
                 .order_by('-timestamp')
     elif username == '**':
         following = request.user.follows.all()
-        posts = Post.objects.filter(author__in=following)\
+        post_list = Post.objects.filter(author__in=following)\
                 .order_by('-timestamp')
     else:
         author = User.objects.get(username=username)
-        posts = Post.objects.filter(author=author).all()\
+        post_list = Post.objects.filter(author=author).all()\
                 .order_by('-timestamp')
-    p = Paginator(posts, 10)
+    p = Paginator(post_list, 10)
     page = p.page(page_num)
     return JsonResponse([post.serialize() for post in page.object_list] + [{"num_pages": p.num_pages}], safe=False)
 
 
 def get_post_by_id(request, id):
-    post = Post.objects.get(pk=id)
-    if not post:
-        return JsonResponse({"message": "Post not found"})
+    try:
+        post = Post.objects.get(pk=id)
+    except ObjectDoesNotExist:
+        return JsonResponse({"message": "Post not found"}, status=404)
     return JsonResponse(post.serialize())
 
 
 @login_required
 def edit_post(request, post_id):
     if request.method != 'PUT':
-        return HttpResponse('error')
+        return JsonResponse({"message": "Request method invalid"})
     post = Post.objects.get(pk=post_id)
     if post.author == request.user:
         data = json.loads(request.body)
@@ -174,3 +175,4 @@ def like_post(request, id):
             post.liked.add(user)
         post.save()
         return HttpResponse(status=204)
+

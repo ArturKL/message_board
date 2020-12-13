@@ -24,8 +24,9 @@ class Post(models.Model):
         return {
             "id": self.id,
             "author": self.author.username,
+            "author_id": self.author.id,
             "body": self.body,
-            "timestamp": linebreaks(naturaltime(self.timestamp)),
+            "timestamp": naturaltime(self.timestamp),
             "liked": self.num_liked(),
             "users_liked": [user.id for user in self.liked.all()]
         }

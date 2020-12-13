@@ -9,13 +9,23 @@ textarea {
 .post {
     border: 1px #aaa solid;
     border-radius: 4px;
-    padding: 20px;
+    padding: 10px;
+    padding-left: 20px;
     margin-bottom: 10px;
+}
+
+.post_author {
+    display: inline;
+}
+
+.timestamp {
+    margin-left: 5px;
 }
 
 .body {
     padding: 5px;
 }
+
 
 .content {
     padding: 10px;

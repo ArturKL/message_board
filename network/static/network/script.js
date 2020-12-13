@@ -86,7 +86,6 @@ function edit_post(post) {
                       <input type="submit" value="Save" class="btn btn-primary" id="submit">`;
     form.onsubmit = () => {
         let data = new FormData(form);
-        console.log(JSON.stringify({"body": data.get("body")}))
         fetch(`edit/${post.id}`, {
             method: "PUT",
             body: JSON.stringify({"body": data.get("body")}),
@@ -109,20 +108,26 @@ function render_post(post) {
     let post_div = document.createElement('div');
     post_div.classList.add('post');
     post_div.id = `post${post.id}`;
-    post_div.innerHTML = `<h5><strong><a href="/u/${post.author}">${post.author}</a></strong></h5>`;
+    post_div.innerHTML = `<h5 class="post_author"><strong><a href="/u/${post.author}">${post.author}</a></strong></h5>`;
+
+    // Timestamp
+    let date = document.createElement('span');
+    date.classList.add('text-muted', 'timestamp');
+    date.innerText = post.timestamp;
+    post_div.append(date)
 
     // Post body
-    let post_body = document.createElement('span');
+    let post_body = document.createElement('div');
     post_body.classList.add('post-body');
     post_body.innerText = post.body;
 
     // Edit button
     post_div.append(post_body);
-    if (current_user == post.author) {
+    if (current_user == post.author_id) {
         let edit = document.createElement('a');
         edit.href = "javascript:void(0)";
         edit.classList.add("edit");
-        edit.innerHTML = "Edit";
+        edit.innerHTML = '<i class="fas fa-edit"></i> Edit';
         edit.addEventListener('click', () => {
             fetch(`posts/${post.id}`)
             .then(response => response.json())
@@ -130,14 +135,10 @@ function render_post(post) {
                 edit_post(post);
             });
         });
-        post_div.append(document.createElement('br'), edit); 
+        post_div.append(edit, document.createElement('br')); 
     }
 
-    // Timestamp
-    let date = document.createElement('span');
-    date.classList.add('text-muted');
-    date.innerHTML = post.timestamp;
-    post_div.append(date)
+    
 
     // Likes
     let like_btn = document.createElement('a');
@@ -149,7 +150,6 @@ function render_post(post) {
     likes.innerHTML += ` ${post.liked}`;
     let icon =  document.createElement('i');
     icon.classList.add("fas", "fa-heart", "like-icon");
-    console.log(current_user, post.users_liked);
     if (post.users_liked.includes(current_user)) {
         icon.style.color = "red";
     } else {
